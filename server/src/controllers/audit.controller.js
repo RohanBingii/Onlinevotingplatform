@@ -1,4 +1,4 @@
-const { verifyIntegrity } = require("../security/hashChain.service");
+const { verifyIntegrity} = require("../security/hashChain.service");
 
 exports.checkIntegrity = async (req, res) => {
     try {

@@ -34,7 +34,7 @@ exports.closeElection = async (req, res) => {
         if (!election) {
             return res.status(404).json({ error: "Election not found" });
         }
-        
+
         election.status = "closed";
         await election.save();
 
@@ -61,11 +61,11 @@ exports.getResults = async (req, res) => {
             });
         }
 
-        // if (new Date() < election.endTime) {
-        //     return res.status(400).json({
-        //         error: "Election time not completed"
-        //     });
-        // }
+        if (new Date() < election.endTime) {
+            return res.status(400).json({
+                error: "Election time not completed"
+            });
+        }
 
         const votes = await Vote.findAll({
             where: { electionId }
@@ -90,6 +90,55 @@ exports.getResults = async (req, res) => {
 
         res.json({ results });
 
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.changeElectionTime = async (req, res) => {
+    try {
+        const { electionId } = req.params;
+        const { startTime, endTime } = req.body;
+
+        const election = await Election.findByPk(electionId);
+        if (!election) {
+            return res.status(404).json({ error: "Election not found" });
+        }
+
+        election.startTime = startTime;
+        election.endTime = endTime;
+        await election.save();
+
+        res.json({ message: "Election time changed successfully" });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAllElections = async (req, res) => {
+    try {
+        const elections = await Election.findAll({
+            attributes: { exclude: ['privateKey'] }
+        });
+        res.json({ elections });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getElectionById = async (req, res) => {
+    try {
+        const { electionId } = req.params;
+        const election = await Election.findOne({
+            where: { id: electionId },
+            attributes: { exclude: ['privateKey'] }
+        });
+
+        if (!election) {
+            return res.status(404).json({ error: "Election not found" });
+        }
+        res.json({ election });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

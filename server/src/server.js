@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 8000;
 require("./models/user.model");
 require("./models/election.model");
 require("./models/vote.model");
+require("./models/candidate.model");
 
 // Load associations AFTER models
 require("./models/associations");

@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth.routes");
 const auditRoutes = require("./routes/audit.routes");
 const mfaRoutes = require("./routes/mfa.routes");
 const electionRoutes = require("./routes/election.routes");
+const candidateRoutes = require("./routes/candidate.routes");
 const app = express();
 
 // Security Headers
@@ -33,6 +34,7 @@ app.use("/api/vote", voteRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/mfa", mfaRoutes);
 app.use("/api/election", electionRoutes);
+app.use("/api/candidates", candidateRoutes);
 // Health check
 app.get("/health", (req, res) => {
     res.json({ status: "Secure Voting API Running" });

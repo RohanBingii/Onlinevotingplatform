@@ -37,7 +37,7 @@ exports.login = async (req, res) => {
             const tempToken = jwt.sign(
                 { id: user.id, type: "mfa_temp" },
                 process.env.JWT_SECRET,
-                { expiresIn: "1h" }
+                { expiresIn: "5m" }
             );
             return res.json({
                 mfaRequired: true,

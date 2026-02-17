@@ -75,7 +75,7 @@ exports.verifyLoginMFA = async (req, res) => {
             mfaVerified: true
         },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "2h" }
     );
 
     res.json({ token: finalToken });

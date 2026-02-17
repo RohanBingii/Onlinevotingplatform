@@ -12,16 +12,26 @@ exports.castVote = async (req, res) => {
 
     try {
         const { electionId, voteChoice } = req.body;
-
+        const now = new Date();
         const election = await Election.findByPk(electionId);
         if (!election) {
             await transaction.rollback();
             return res.status(404).json({ error: "Election not found" });
         }
-        if(election.status !== "active"){
+        if(now < election.startTime){
             await transaction.rollback();
-            return res.status(400).json({ error: "Election is not active" });
+            election.status = "upcoming";
+            await election.save();
+            return res.status(400).json({ error: "Election is not started yet" });
         }
+        if(now > election.endTime){
+            await transaction.rollback();
+            election.status = "closed";
+            await election.save();
+            return res.status(400).json({ error: "Election is closed" });
+        }
+        election.status = "active";
+        await election.save();
         const encryptedVote = encryptVote(
             voteChoice,
             election.publicKey
