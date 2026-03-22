@@ -5,7 +5,8 @@ const jwt = require("jsonwebtoken");
 // Step 1: Generate Secret + QR
 exports.setupMFA = async (req, res) => {
     try {
-        const user = await User.findOne({ where: { email: req.body.email } });
+        const user = await User.findByPk(req.user.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
 
         const { base32, qrCode } = await generateMFASecret(user.email);
 
@@ -22,11 +23,13 @@ exports.setupMFA = async (req, res) => {
     }
 };
 
+
+
 // Step 2: Verify Token & Enable MFA
 exports.enableMFA = async (req, res) => {
     try {
         const { token } = req.body;
-        
+
         const user = await User.findByPk(req.user.id);
 
         const isValid = verifyMFAToken(token, user.mfaSecret);
@@ -61,6 +64,9 @@ exports.verifyLoginMFA = async (req, res) => {
     }
 
     const user = await User.findByPk(decoded.id);
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    }
 
     const valid = verifyMFAToken(otp, user.mfaSecret);
 
