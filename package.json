@@ -1,6 +1,13 @@
 {
-  "dependencies": {
-    "qrcode": "^1.5.4",
-    "speakeasy": "^2.0.0"
+  "name": "online-voting-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "postinstall": "npm run install:server && npm run install:client",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "npm run dev:server & npm run dev:client"
   }
 }
