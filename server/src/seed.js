@@ -1,16 +1,18 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const sequelize = require("./config/database");
-const User = require("./models/user.model");
-const Election = require("./models/election.model");
-const Candidate = require("./models/candidate.model");
-const Vote = require("./models/vote.model");
 const bcrypt = require("bcrypt");
 const { generateKeyPair } = require("./security/encryption.service");
 
+// Require associations so all models (including VotingReceipt) sync properly
+const { User, Election, Candidate } = require("./models/associations");
+
 async function seed() {
     try {
+        await sequelize.authenticate();
         await sequelize.sync({ force: true }); // Wipe and recreate tables
+
+        console.log("Database wiped and synced.");
 
         // 1. Create Users
         const adminPass = await bcrypt.hash("admin123", 10);
@@ -19,25 +21,25 @@ async function seed() {
         const admin = await User.create({
             email: "admin@securevote.com",
             password: adminPass,
-            role: "admin"
+            role: "admin",
+            mfaEnabled: false
         });
 
         const voter = await User.create({
             email: "voter@securevote.com",
             password: voterPass,
-            role: "voter"
+            role: "voter",
+            mfaEnabled: false
         });
 
-        console.log("Users created.");
+        console.log("✅ Users created: admin@securevote.com & voter@securevote.com");
 
         // 2. Create Elections
         const keyPair1 = generateKeyPair();
-        const keyPair2 = generateKeyPair();
-        const keyPair3 = generateKeyPair();
 
         const activeElection = await Election.create({
-            title: "Student Council Election 2026",
-            description: "Cast your vote for the next student council president. Your voice matters in shaping our campus future.",
+            title: "Global Tech Board Election 2026",
+            description: "Voting for the new board of directors.",
             startTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Started yesterday
             endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Ends in 7 days
             status: "active",
@@ -45,58 +47,30 @@ async function seed() {
             privateKey: keyPair1.privateKey
         });
 
-        const upcomingElection = await Election.create({
-            title: "Annual Board Meeting Vote",
-            description: "Upcoming vote for new board members. Review candidates before the election starts.",
-            startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Starts in 3 days
-            endTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // Ends in 10 days
-            status: "upcoming",
-            publicKey: keyPair2.publicKey,
-            privateKey: keyPair2.privateKey
-        });
-
-        const closedElection = await Election.create({
-            title: "Q1 Strategy Referendum",
-            description: "Vote results for the Q1 strategy proposal.",
-            startTime: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // Started 10 days ago
-            endTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // Ended 3 days ago
-            status: "closed",
-            publicKey: keyPair3.publicKey,
-            privateKey: keyPair3.privateKey
-        });
-
-        console.log("Elections created.");
+        console.log(`✅ Active Election created: ${activeElection.title} (ID: ${activeElection.id})`);
 
         // 3. Create Candidates
         await Candidate.bulkCreate([
             {
                 name: "Alice Johnson",
-                party: "Progressive Alliance",
-                manifesto: "Focusing on sustainability and student welfare improvements.",
-                electionId: activeElection.id,
-                photoUrl: "https://randomuser.me/api/portraits/women/44.jpg"
+                party: "Innovators",
+                manifesto: "Focusing on AI safety.",
+                electionId: activeElection.id
             },
             {
                 name: "Bob Smith",
-                party: "Unity Party",
-                manifesto: "Improving campus infrastructure and digital resources.",
-                electionId: activeElection.id,
-                photoUrl: "https://randomuser.me/api/portraits/men/32.jpg"
-            },
-            {
-                name: "Charlie Brown",
-                party: "Independent",
-                manifesto: "Transparent governance and regular town halls.",
-                electionId: activeElection.id,
-                photoUrl: "https://randomuser.me/api/portraits/men/86.jpg"
+                party: "Open Source Coalition",
+                manifesto: "Free software for all.",
+                electionId: activeElection.id
             }
         ]);
 
-        console.log("Database seeded successfully!");
+        console.log("✅ Candidates created for the active election.");
+        console.log("\n🎉 Database seeded successfully! You can now start the server.");
         process.exit(0);
 
     } catch (err) {
-        console.error("Seeding failed:", err);
+        console.error("❌ Seeding failed:", err);
         process.exit(1);
     }
 }

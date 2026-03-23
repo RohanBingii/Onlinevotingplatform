@@ -2,7 +2,7 @@
 const { User } = require("../models/associations");
 const { generateMFASecret, verifyMFAToken } = require("../security/mfa.service");
 const jwt = require("jsonwebtoken");
-// Step 1: Generate Secret + QR
+
 exports.setupMFA = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id);
@@ -14,8 +14,9 @@ exports.setupMFA = async (req, res) => {
         await user.save();
 
         res.json({
-            message: "Scan QR code in Authenticator app",
-            qrCode
+            message: "Scan QR code or use manual entry key",
+            qrCode,
+            secret: base32 // <--- ADD THIS LINE so the user/script can copy the manual key
         });
 
     } catch (err) {

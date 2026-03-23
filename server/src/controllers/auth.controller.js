@@ -75,8 +75,46 @@ exports.getProfile = async (req, res) => {
         res.json({
             id: user.id,
             email: user.email,
+            username: user.username,
             role: user.role,
             mfaEnabled: user.mfaEnabled
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findByPk(req.user.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (username !== undefined) {
+            // Check if username is already taken by someone else
+            if (username) {
+                const existing = await User.findOne({ where: { username } });
+                if (existing && existing.id !== user.id) {
+                    return res.status(400).json({ error: "Username already taken" });
+                }
+            }
+            user.username = username;
+        }
+
+        if (password && password.trim() !== '') {
+            user.password = await bcrypt.hash(password, 10);
+        }
+
+        await user.save();
+        res.json({ 
+            message: "Profile updated successfully", 
+            user: { 
+                id: user.id, 
+                email: user.email, 
+                username: user.username, 
+                role: user.role,
+                mfaEnabled: user.mfaEnabled
+            } 
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

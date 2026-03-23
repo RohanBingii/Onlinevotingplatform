@@ -13,6 +13,9 @@ require("./models/candidate.model");
 // Load associations AFTER models
 require("./models/associations");
 
+// Start Scheduled Jobs
+require("./jobs/election.job");
+
 async function startServer() {
     try {
         // 1️⃣ Test DB connection

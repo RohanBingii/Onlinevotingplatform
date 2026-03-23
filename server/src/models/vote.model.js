@@ -7,24 +7,15 @@ const Vote = sequelize.define("Vote", {
         autoIncrement: true,
         primaryKey: true
     },
-
-    userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        unique: "unique_vote_per_user_election"
-    },
-
+    // userId REMOVED to preserve ballot secrecy
     electionId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        unique: "unique_vote_per_user_election"
+        allowNull: false
     },
-
     encryptedVote: {
         type: DataTypes.TEXT,
         allowNull: false
     }
-
 }, {
     tableName: "votes",
     timestamps: true

@@ -19,6 +19,6 @@ exports.verifyMFAToken = (token, secret) => {
         secret,
         encoding: "base32",
         token,
-        window: 1
+        window: 4
     });
 };

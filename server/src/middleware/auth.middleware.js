@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../models/associations");
+
 exports.authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
@@ -18,23 +18,15 @@ exports.authenticate = (req, res, next) => {
     }
 };
 
-exports.requireAdmin = (req, res, next) => {
-    if (req.user.role !== "admin") {
-        return res.status(403).json({ error: "Admin access required" });
-    }
-    next();
-};
-
 exports.authorize = (...allowedRoles) => {
-    return async (req, res, next) => {
-        const user = await User.findByPk(req.user.id);
-        if (!user) {
-            return res.status(401).json({ error: "User not found" });
+    return (req, res, next) => {
+        // We already have the role from the verified JWT payload
+        if (!req.user || !req.user.role) {
+            return res.status(401).json({ error: "User role not found in token" });
         }
-        if(!allowedRoles.includes(user.role)){
+        if (!allowedRoles.includes(req.user.role)) {
             return res.status(403).json({ error: "Access denied" });
         }
         next();
     };
 };
-

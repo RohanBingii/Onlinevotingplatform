@@ -15,7 +15,27 @@ exports.checkIntegrity = async (req, res) => {
             integrity: true,
             message: "Audit log integrity verified"
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
 
+exports.verifyElection = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const valid = await verifyIntegrity(id);
+
+        if (!valid) {
+            return res.status(500).json({
+                integrity: false,
+                message: "Blockchain tampering detected for this election."
+            });
+        }
+
+        res.json({
+            integrity: true,
+            message: `Election #${id} records are cryptographically secured and verified intact.`
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

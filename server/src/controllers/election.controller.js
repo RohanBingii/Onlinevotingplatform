@@ -1,8 +1,9 @@
+
 const Election = require("../models/election.model");
-const { generateKeyPair } = require("../security/encryption.service");
-const { decryptVote } = require("../security/encryption.service");
+const { generateKeyPair, decryptVote } = require("../security/encryption.service");
 const { addAuditEntry } = require("../security/hashChain.service");
 const Vote = require("../models/vote.model");
+
 
 exports.createElection = async (req, res) => {
     try {
@@ -35,7 +36,10 @@ exports.closeElection = async (req, res) => {
             return res.status(404).json({ error: "Election not found" });
         }
 
+        // Update status AND set endTime to right now
         election.status = "closed";
+        election.endTime = new Date(); // <--- ADD THIS LINE
+        
         await election.save();
 
         res.json({ message: "Election closed successfully" });
@@ -45,6 +49,7 @@ exports.closeElection = async (req, res) => {
     }
 };
 
+const { Candidate } = require("../models/associations"); // Make sure Candidate is imported at the top
 
 exports.getResults = async (req, res) => {
     try {
@@ -56,31 +61,36 @@ exports.getResults = async (req, res) => {
         }
 
         if (election.status !== "closed") {
-            return res.status(400).json({
-                error: "Election is not closed yet"
-            });
-        }
-
-        if (new Date() < election.endTime) {
-            return res.status(400).json({
-                error: "Election time not completed"
-            });
+            return res.status(400).json({ error: "Election is not closed yet" });
         }
 
         const votes = await Vote.findAll({
             where: { electionId }
         });
 
-        const results = {};
-
+        // 1. Tally the decrypted Candidate IDs
+        const rawResults = {};
         for (let vote of votes) {
             const decrypted = decryptVote(
                 vote.encryptedVote,
                 election.privateKey
             );
-
-            results[decrypted] = (results[decrypted] || 0) + 1;
+            rawResults[decrypted] = (rawResults[decrypted] || 0) + 1;
         }
+
+        // 2. Fetch Candidates and map the results to their names
+        const candidates = await Candidate.findAll({
+            where: { electionId }
+        });
+
+        const formattedResults = candidates.map(candidate => {
+            return {
+                id: candidate.id,
+                name: candidate.name,
+                party: candidate.party,
+                totalVotes: rawResults[candidate.id.toString()] || 0
+            };
+        });
 
         await addAuditEntry(
             "RESULTS_VIEWED",
@@ -88,13 +98,12 @@ exports.getResults = async (req, res) => {
             { electionId }
         );
 
-        res.json({ results });
+        res.json({ results: formattedResults });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
-
 exports.changeElectionTime = async (req, res) => {
     try {
         const { electionId } = req.params;
