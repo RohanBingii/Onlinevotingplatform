@@ -18,6 +18,7 @@ import UserDashboard from './pages/voter/UserDashboard';
 import ElectionVote from './pages/voter/ElectionVote';
 import SecuritySettings from './pages/SecuritySettings';
 import ProfileSettings from './pages/ProfileSettings';
+import VoterElectionResults from './pages/voter/VoterElectionResults';
 
 const NotFound = () => <div className="text-center pt-20"><h1 className="text-4xl font-bold">404 Not Found</h1></div>;
 
@@ -67,6 +68,14 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/results/:id" 
+              element={
+                <ProtectedRoute>
+                  <VoterElectionResults />
+                </ProtectedRoute>
+              } 
+            />
 
             {/* Admin Routes */}
             <Route 
@@ -103,7 +112,7 @@ const App = () => {
         theme="dark" 
         position="top-right"
         toastOptions={{
-          className: 'glass !bg-slate-900/80 !border-white/10 !text-white'
+          className: 'glass !bg-white/80 !border-slate-200 !text-slate-900'
         }}
       />
     </AuthProvider>

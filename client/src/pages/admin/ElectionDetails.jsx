@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+// Recharts removed for simpler UI
 import api from '../../api/axios';
 import { Lock, Plus, Users, Award, AlertTriangle, ShieldCheck } from 'lucide-react';
 
@@ -48,9 +48,13 @@ const ElectionDetails = () => {
       await new Promise(res => setTimeout(res, 1200));
       const res = await api.get(`/audit/election/${id}/verify`);
       setIntegrityStatus(res.data);
-      toast.success('Election records verified securely');
+      if (res.data.integrity) {
+        toast.success('Election records verified securely');
+      } else {
+        toast.error('Integrity breach detected! Records may have been tampered with.');
+      }
     } catch (err) {
-      toast.error('Election integrity check failed');
+      toast.error('Could not reach integrity service. Please try again.');
       setIntegrityStatus({
         integrity: false,
         message: err.response?.data?.message || 'Verification Failed'
@@ -86,12 +90,12 @@ const ElectionDetails = () => {
     }
   };
 
-  if (loading) return <div className="text-center pt-20 animate-pulse text-white">Loading securely...</div>;
+  if (loading) return <div className="text-center pt-20 animate-pulse text-slate-900">Loading securely...</div>;
   if (!election) return <div className="text-center pt-20 text-red-400">Election not found</div>;
 
   return (
     <div className="py-8">
-      <button onClick={() => navigate('/admin/dashboard')} className="text-slate-400 hover:text-white mb-6 flex items-center gap-2 transition-colors">
+      <button onClick={() => navigate('/admin/dashboard')} className="text-slate-500 hover:text-slate-900 mb-6 flex items-center gap-2 transition-colors">
         &larr; Back to Dashboard
       </button>
 
@@ -102,26 +106,26 @@ const ElectionDetails = () => {
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">{election.title}</h1>
-              <p className="text-slate-400 max-w-2xl">{election.description}</p>
+              <h1 className="text-4xl font-bold text-slate-900 mb-2">{election.title}</h1>
+              <p className="text-slate-500 max-w-2xl">{election.description}</p>
             </div>
             <div className="text-right flex flex-col items-end gap-3">
-              <span className={`px-4 py-2 rounded-full font-bold text-sm ${election.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}>
+              <span className={`px-4 py-2 rounded-full font-bold text-sm ${election.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                 {election.status.toUpperCase()}
               </span>
               <button 
                 onClick={handleVerifyElection}
                 disabled={verifying}
-                className="text-xs flex items-center gap-1.5 bg-primary-500/20 hover:bg-primary-500/40 text-primary-100 border border-primary-500/50 px-3 py-2 rounded-lg transition-all"
+                className="text-sm font-medium flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white shadow-sm px-4 py-2 rounded-lg transition-all"
               >
-                {verifying ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-200"></div> : <ShieldCheck className="w-4 h-4" />}
+                {verifying ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> : <ShieldCheck className="w-4 h-4" />}
                 Verify Integrity
               </button>
             </div>
           </div>
 
           {integrityStatus && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`mb-6 p-4 rounded-xl border ${integrityStatus.integrity ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`mb-6 p-4 rounded-xl border ${integrityStatus.integrity ? 'bg-green-500/10 border-green-500/30 text-green-700' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
               <div className="flex items-center gap-2 font-medium">
                 <ShieldCheck className="w-5 h-5 flex-shrink-0" /> <span className="text-sm">{integrityStatus.message}</span>
               </div>
@@ -138,26 +142,37 @@ const ElectionDetails = () => {
 
       {results ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Award className="w-6 h-6 text-yellow-400"/> Cryptographic Results</h2>
-          <div className="h-80 w-full mb-8">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={results} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <XAxis dataKey="name" stroke="#cbd5e1" />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }} />
-                <Bar dataKey="totalVotes" radius={[4, 4, 0, 0]}>
-                  {results.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={['#6366f1', '#a855f7', '#ec4899', '#3b82f6'][index % 4]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Award className="w-6 h-6 text-yellow-400"/> Cryptographic Results</h2>
+          <div className="flex flex-col gap-4 mb-8">
+            {(() => {
+              const maxVotes = Math.max(...results.map(r => r.totalVotes), 0);
+              const sortedResults = [...results].sort((a, b) => b.totalVotes - a.totalVotes);
+
+              return sortedResults.map((candidate) => {
+                const isWinner = candidate.totalVotes === maxVotes && candidate.totalVotes > 0;
+                return (
+                  <div key={candidate.id} className={`p-5 rounded-xl border flex items-center justify-between transition-colors ${isWinner ? 'bg-green-50 border-green-200 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 flex items-center">
+                        {candidate.name}
+                        {isWinner && <span className="text-xs bg-yellow-100 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-full font-bold ml-3 flex items-center gap-1"><Award className="w-3.5 h-3.5"/> WINNER</span>}
+                      </h3>
+                      <p className="text-sm text-slate-500 font-medium mt-1">{candidate.party}</p>
+                    </div>
+                    <div className="text-right bg-white px-5 py-3 rounded-lg border border-slate-100 shadow-sm min-w-[100px]">
+                      <p className="text-3xl font-black text-primary-600 leading-none mb-1">{candidate.totalVotes}</p>
+                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Votes</p>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </motion.div>
       ) : (
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2"><Users className="w-6 h-6"/> Candidates</h2>
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Users className="w-6 h-6"/> Candidates</h2>
             <button onClick={() => setShowAddCandidate(!showAddCandidate)} className="glass-button flex items-center gap-2 text-sm px-4 py-2">
               <Plus className="w-4 h-4" /> Add Candidate
             </button>
@@ -177,7 +192,7 @@ const ElectionDetails = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {candidates.length === 0 ? (
-              <p className="text-slate-400 col-span-3">No candidates added yet.</p>
+              <p className="text-slate-500 col-span-3">No candidates added yet.</p>
             ) : (
               candidates.map(c => (
                 <div key={c.id} className="glass-card p-6 flex gap-4 items-center">
@@ -185,9 +200,9 @@ const ElectionDetails = () => {
                     {c.photoUrl ? <img src={c.photoUrl} alt={c.name} className="w-full h-full object-cover" /> : <Users className="w-8 h-8 m-4 text-primary-400" />}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">{c.name}</h3>
+                    <h3 className="text-lg font-bold text-slate-900">{c.name}</h3>
                     <p className="text-sm text-primary-400 font-medium mb-1">{c.party}</p>
-                    <p className="text-xs text-slate-400 line-clamp-2">{c.manifesto}</p>
+                    <p className="text-xs text-slate-500 line-clamp-2">{c.manifesto}</p>
                   </div>
                 </div>
               ))

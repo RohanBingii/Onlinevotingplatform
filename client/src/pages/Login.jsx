@@ -53,13 +53,13 @@ const Login = () => {
         <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-primary-500/10 to-transparent -z-10 animate-spin-slow pointer-events-none" />
         
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-          <p className="text-slate-400">Sign in to your account securely</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
+          <p className="text-slate-500">Sign in to your account securely</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
             <input 
               type="email" 
               required
@@ -70,7 +70,7 @@ const Login = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Password</label>
             <input 
               type="password" 
               required
@@ -90,7 +90,7 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
+        <div className="mt-6 text-center text-sm text-slate-500">
           Don't have an account? <Link to="/register" className="text-primary-400 hover:text-primary-300 transition-colors">Register here</Link>
         </div>
       </motion.div>

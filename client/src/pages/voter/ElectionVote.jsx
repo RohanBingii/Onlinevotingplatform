@@ -63,20 +63,20 @@ const ElectionVote = () => {
     }
   };
 
-  if (loading) return <div className="text-center pt-20 text-white animate-pulse flex flex-col items-center"><Lock className="w-8 h-8 mb-4"/> Establishing Secure Connection...</div>;
+  if (loading) return <div className="text-center pt-20 text-slate-900 animate-pulse flex flex-col items-center"><Lock className="w-8 h-8 mb-4"/> Establishing Secure Connection...</div>;
   if (!election) return <div className="pt-20 text-center">Not found</div>;
 
   if (receipt) {
     return (
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto py-12">
         <div className="glass-card p-10 text-center border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
-          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-green-400">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-700">
             <CheckCircle className="w-10 h-10" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Vote Successfully Cast</h2>
-          <p className="text-slate-400 mb-8">Your vote has been encrypted and securely added to the blockchain ledger.</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Vote Successfully Cast</h2>
+          <p className="text-slate-500 mb-8">Your vote has been encrypted and securely added to the blockchain ledger.</p>
           
-          <div className="bg-slate-900/50 rounded-xl p-6 mb-8 border border-white/5 text-left text-sm max-w-full overflow-hidden">
+          <div className="bg-white rounded-xl p-6 mb-8 border border-slate-200 text-left text-sm max-w-full overflow-hidden">
             <div className="text-slate-500 mb-1">Cryptographic Receipt ID</div>
             <div className="font-mono text-primary-400 break-all">{receipt.transactionId || receipt.id || JSON.stringify(receipt)}</div>
           </div>
@@ -90,8 +90,8 @@ const ElectionVote = () => {
   return (
     <div className="max-w-4xl mx-auto py-8">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-white mb-4">{election.title}</h1>
-        <p className="text-slate-400 text-lg mb-4">{election.description}</p>
+        <h1 className="text-4xl font-bold text-slate-900 mb-4">{election.title}</h1>
+        <p className="text-slate-500 text-lg mb-4">{election.description}</p>
         <div className="inline-flex items-center gap-2 bg-primary-500/10 text-primary-300 px-4 py-2 rounded-full text-sm font-medium border border-primary-500/20">
           <Lock className="w-4 h-4" /> End-to-End Encrypted Voting Session
         </div>
@@ -111,15 +111,15 @@ const ElectionVote = () => {
             }`}
           >
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0">
+              <div className="w-16 h-16 rounded-full bg-white border border-slate-300 overflow-hidden flex-shrink-0">
                 {c.photoUrl ? <img src={c.photoUrl} alt={c.name} className="w-full h-full object-cover" /> : null}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">{c.name}</h3>
+                <h3 className="text-xl font-bold text-slate-900">{c.name}</h3>
                 <p className="text-sm font-medium text-primary-400">{c.party}</p>
               </div>
             </div>
-            <p className="text-slate-400 text-sm">{c.manifesto}</p>
+            <p className="text-slate-500 text-sm">{c.manifesto}</p>
             
             <div className="mt-4 flex justify-end">
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedCandidate === c.id ? 'border-primary-500 bg-primary-500' : 'border-slate-500'}`}>
@@ -143,10 +143,10 @@ const ElectionVote = () => {
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card max-w-md w-full p-6 border-primary-500/30">
-            <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2"><Lock className="w-6 h-6 text-primary-400" /> Confirm Security Action</h3>
-            <p className="text-slate-300 mb-6">Cast your encrypted vote for the selected candidate? This action is cryptographically irreversible and will be logged on the blockchain.</p>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2"><Lock className="w-6 h-6 text-primary-400" /> Confirm Security Action</h3>
+            <p className="text-slate-600 mb-6">Cast your encrypted vote for the selected candidate? This action is cryptographically irreversible and will be logged on the blockchain.</p>
             <div className="flex gap-4 justify-end">
-              <button onClick={() => setShowConfirm(false)} className="glass-button-secondary py-2 px-4 hover:bg-slate-800 transition-colors">Cancel</button>
+              <button onClick={() => setShowConfirm(false)} className="glass-button-secondary py-2 px-4 hover:bg-white transition-colors">Cancel</button>
               <button 
                 onClick={handleVote} 
                 className="glass-button py-2 px-6 flex items-center gap-2"

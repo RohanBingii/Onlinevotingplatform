@@ -9,42 +9,62 @@ exports.addAuditEntry = async (
     action,
     userId = null,
     metadata = {},
-    transaction = null
+    providedTransaction = null
 ) => {
+    const sequelize = require("../config/database");
+    
+    // If a transaction isn't provided, create our own to manage the lock
+    const t = providedTransaction || await sequelize.transaction();
 
-    const lastEntry = await Audit.findOne({
-        order: [["createdAt", "DESC"], ["id", "DESC"]], // Ensure absolute latest
-        transaction,
-        lock: transaction ? transaction.LOCK.UPDATE : undefined
-    });
+    try {
+        // Lock the audit_logs table to prevent concurrent inserts from breaking the hash chain
+        await sequelize.query('LOCK TABLE "audit_logs" IN EXCLUSIVE MODE', { transaction: t });
 
-    const previousHash = lastEntry ? lastEntry.currentHash : "GENESIS";
+        const lastEntry = await Audit.findOne({
+            order: [["createdAt", "DESC"], ["id", "DESC"]], // Ensure absolute latest
+            transaction: t
+            // lock is no longer needed since the whole table is locked
+        });
 
-    const dataToHash = JSON.stringify({
-        action,
-        userId,
-        metadata,
-        previousHash
-    });
+        const previousHash = lastEntry ? lastEntry.currentHash : "GENESIS";
 
-    const currentHash = calculateHash(dataToHash);
-
-    return await Audit.create(
-        {
+        const dataToHash = JSON.stringify({
             action,
             userId,
             metadata,
-            previousHash,
-            currentHash
-        },
-        { transaction }
-    );
+            previousHash
+        });
+
+        const currentHash = calculateHash(dataToHash);
+
+        const entry = await Audit.create(
+            {
+                action,
+                userId,
+                metadata,
+                previousHash,
+                currentHash
+            },
+            { transaction: t }
+        );
+
+        if (!providedTransaction) {
+            await t.commit();
+        }
+
+        return entry;
+    } catch (error) {
+        if (!providedTransaction) {
+            await t.rollback();
+        }
+        throw error;
+    }
 };
 
 
 exports.verifyIntegrity = async (targetElectionId = null) => {
     const entries = await Audit.findAll({
-        order: [["createdAt", "ASC"]]
+        order: [["createdAt", "ASC"], ["id", "ASC"]]
     });
 
     if (entries.length === 0) {

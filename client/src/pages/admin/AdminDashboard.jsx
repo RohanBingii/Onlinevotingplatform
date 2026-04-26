@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Plus, Calendar, Settings, Activity } from 'lucide-react';
+import { Plus, Calendar, Settings, Activity, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../api/axios';
 
@@ -75,33 +75,42 @@ const AdminDashboard = () => {
     <div className="py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-slate-400">Manage elections and monitor system integrity</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
+          <p className="text-slate-500">Manage elections and monitor system integrity</p>
         </div>
-        <button 
-          onClick={() => setShowCreate(!showCreate)}
-          className="glass-button flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" /> Create Election
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin/audit"
+            className="glass-button-secondary flex items-center gap-2"
+            title="View Audit Logs"
+          >
+            <ShieldCheck className="w-5 h-5 text-primary-400" /> Audit Logs
+          </Link>
+          <button 
+            onClick={() => setShowCreate(!showCreate)}
+            className="glass-button flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" /> Create Election
+          </button>
+        </div>
       </div>
 
       {editingElection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/80 backdrop-blur-sm">
           <motion.form 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card p-8 w-full max-w-md border border-primary-500/30"
             onSubmit={handleUpdateTiming}
           >
-            <h2 className="text-2xl font-bold text-white mb-6">Edit Election Timing</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Edit Election Timing</h2>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Start Time</label>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Start Time</label>
                 <input type="datetime-local" required value={editStart} onChange={e=>setEditStart(e.target.value)} className="glass-input w-full" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">End Time</label>
+                <label className="block text-sm font-medium text-slate-600 mb-1">End Time</label>
                 <input type="datetime-local" required value={editEnd} onChange={e=>setEditEnd(e.target.value)} className="glass-input w-full" />
               </div>
             </div>
@@ -120,16 +129,16 @@ const AdminDashboard = () => {
           className="glass-card p-6 mb-8"
           onSubmit={handleCreate}
         >
-          <h2 className="text-xl font-bold text-white mb-4">New Election</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-4">New Election</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="text" placeholder="Title" required value={title} onChange={e=>setTitle(e.target.value)} className="glass-input" />
             <input type="text" placeholder="Description" required value={description} onChange={e=>setDescription(e.target.value)} className="glass-input" />
             <div>
-              <label className="block text-sm text-slate-400 mb-1">Start Time</label>
+              <label className="block text-sm text-slate-500 mb-1">Start Time</label>
               <input type="datetime-local" required value={startTime} onChange={e=>setStartTime(e.target.value)} className="glass-input w-full" />
             </div>
             <div>
-              <label className="block text-sm text-slate-400 mb-1">End Time</label>
+              <label className="block text-sm text-slate-500 mb-1">End Time</label>
               <input type="datetime-local" required value={endTime} onChange={e=>setEndTime(e.target.value)} className="glass-input w-full" />
             </div>
           </div>
@@ -155,14 +164,14 @@ const AdminDashboard = () => {
               className="glass-card p-6 flex flex-col h-full hover:border-primary-500/50 transition-colors"
             >
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold text-white">{election.title}</h3>
-                <span className={`px-2 py-1 text-xs rounded-full font-medium ${election.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                <h3 className="text-xl font-bold text-slate-900">{election.title}</h3>
+                <span className={`px-2 py-1 text-xs rounded-full font-medium ${election.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                   {election.status.toUpperCase()}
                 </span>
               </div>
-              <p className="text-slate-400 text-sm mb-6 flex-grow">{election.description}</p>
+              <p className="text-slate-500 text-sm mb-6 flex-grow">{election.description}</p>
               
-              <div className="space-y-2 mb-6 text-sm text-slate-300">
+              <div className="space-y-2 mb-6 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-primary-400" />
                   <span>Start: {new Date(election.startTime).toLocaleString()}</span>

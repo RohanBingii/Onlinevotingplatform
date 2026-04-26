@@ -44,17 +44,17 @@ const ProfileSettings = () => {
   return (
     <div className="py-12 max-w-2xl mx-auto">
       <div className="mb-12">
-        <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
+        <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
           <User className="w-10 h-10 text-primary-400" /> User Profile
         </h1>
-        <p className="text-slate-400">Manage your personal identification and login credentials.</p>
+        <p className="text-slate-500">Manage your personal identification and login credentials.</p>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8">
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email Address (Locked)</label>
+            <label className="block text-sm font-medium text-slate-600 mb-2">Email Address (Locked)</label>
             <input 
               type="email" 
               value={user?.email || ''}
@@ -65,9 +65,9 @@ const ProfileSettings = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
+            <label className="block text-sm font-medium text-slate-600 mb-2">Username</label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
               <input 
                 type="text" 
                 value={username}
@@ -78,11 +78,11 @@ const ProfileSettings = () => {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/5 mt-2">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <div className="pt-4 border-t border-slate-200 mt-2">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <Lock className="w-5 h-5 text-primary-400" /> Update Password
             </h3>
-            <label className="block text-sm font-medium text-slate-300 mb-2">New Password (Optional)</label>
+            <label className="block text-sm font-medium text-slate-600 mb-2">New Password (Optional)</label>
             <input 
               type="password" 
               value={password}

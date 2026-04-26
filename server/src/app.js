@@ -19,17 +19,25 @@ app.use(cors({
     credentials: true
 }));
 
-// Rate Limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100
+// Global Rate Limiting (generous — allows normal SPA browsing)
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500,                  // 500 requests per IP per window
+    message: { error: "Too many requests, please try again later." }
 });
-app.use(limiter);
+app.use(globalLimiter);
+
+// Strict Auth Rate Limiter (protects against brute-force on login/register)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,                   // only 20 login attempts per IP per window
+    message: { error: "Too many login attempts, please try again in 15 minutes." }
+});
 
 app.use(express.json());
 
 // Routes
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/vote", voteRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/mfa", mfaRoutes);

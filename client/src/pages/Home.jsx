@@ -14,8 +14,8 @@ const FeatureCard = ({ icon: Icon, title, description, delay }) => (
     <div className="w-12 h-12 bg-primary-500/20 rounded-full flex items-center justify-center mb-4 text-primary-400">
       <Icon className="w-6 h-6" />
     </div>
-    <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-    <p className="text-slate-400">{description}</p>
+    <h3 className="text-xl font-bold mb-2 text-slate-900">{title}</h3>
+    <p className="text-slate-500">{description}</p>
   </motion.div>
 );
 
@@ -30,10 +30,10 @@ const Home = () => {
         transition={{ duration: 0.8 }}
         className="text-center max-w-3xl"
       >
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-indigo-300">
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800">
           The Future of Secure Voting
         </h1>
-        <p className="text-xl text-slate-300 mb-10 leading-relaxed">
+        <p className="text-xl text-slate-600 mb-10 leading-relaxed">
           Experience uncompromising security, transparency, and ease-of-use with VoteChain's blockchain-inspired electronic voting platform.
         </p>
         

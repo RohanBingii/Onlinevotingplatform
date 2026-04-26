@@ -13,7 +13,7 @@ const {
 router.post("/create", authenticate, authorize("admin"), createElection);
 router.post("/close/:electionId", authenticate, authorize("admin"), closeElection);
 router.put("/:electionId/time", authenticate, authorize("admin"), changeElectionTime); // Added missing route
-router.get("/results/:electionId", authenticate, authorize("admin"), getResults);
+router.get("/results/:electionId", authenticate, getResults);
 router.get("/", authenticate, getAllElections);
 router.get("/:electionId", authenticate, getElectionById);
 

@@ -32,13 +32,13 @@ const Register = () => {
         className="glass-card w-full max-w-md p-8"
       >
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
-          <p className="text-slate-400">Join the secure voting platform today</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h2>
+          <p className="text-slate-500">Join the secure voting platform today</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
             <input 
               type="email" 
               required
@@ -49,7 +49,7 @@ const Register = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Password</label>
             <input 
               type="password" 
               required
@@ -69,7 +69,7 @@ const Register = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
+        <div className="mt-6 text-center text-sm text-slate-500">
           Already have an account? <Link to="/login" className="text-primary-400 hover:text-primary-300 transition-colors">Sign in</Link>
         </div>
       </motion.div>

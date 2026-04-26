@@ -59,7 +59,7 @@ exports.castVote = async (req, res) => {
         const auditEntry = await addAuditEntry(
             "VOTE_CAST",
             userId,
-            { electionId },
+            { electionId: parseInt(electionId) },
             transaction
         );
 
@@ -82,6 +82,8 @@ exports.castVote = async (req, res) => {
 
     } catch (err) {
         await transaction.rollback();
+        console.log(err);
         res.status(500).json({ error: err.message });
+        
     }
 };
