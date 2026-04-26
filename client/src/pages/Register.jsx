@@ -15,8 +15,8 @@ const Register = () => {
     setLoading(true);
     try {
       await api.post('/auth/register', { email, password });
-      toast.success('Registration successful! Please sign in.');
-      navigate('/login');
+      toast.success('Registration successful! Please check your email for the OTP.');
+      navigate('/verify-email', { state: { email } });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Registration failed');
     } finally {
@@ -45,8 +45,12 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="glass-input w-full" 
-              placeholder="voter@example.com"
+              placeholder="student@iiita.ac.in"
             />
+            <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Only authorized academic email domains are accepted.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-1">Password</label>

@@ -32,6 +32,18 @@ const User = sequelize.define("User", {
     mfaEnabled: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    verificationOTP: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    otpExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true
     }
 }, {
     tableName: "users",

@@ -3,8 +3,8 @@ const sequelize = require("../config/database");
 
 const Vote = sequelize.define("Vote", {
     id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
     // userId REMOVED to preserve ballot secrecy
@@ -18,7 +18,7 @@ const Vote = sequelize.define("Vote", {
     }
 }, {
     tableName: "votes",
-    timestamps: true
+    timestamps: false
 });
 
 module.exports = Vote;

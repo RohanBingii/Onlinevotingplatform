@@ -10,6 +10,7 @@ import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import MfaVerify from './pages/MfaVerify';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ElectionDetails from './pages/admin/ElectionDetails';
@@ -31,6 +32,7 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/mfa-verify" element={<MfaVerify />} />
 
             {/* Shared Authenticated Routes */}

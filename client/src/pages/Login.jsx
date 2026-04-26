@@ -37,7 +37,12 @@ const Login = () => {
         navigate(profileRes.data.role === 'admin' ? '/admin/dashboard' : '/dashboard');
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Login failed');
+      if (err.response?.data?.unverified) {
+        toast.error('Email not verified. Please verify your email.');
+        navigate('/verify-email', { state: { email: err.response.data.email || email } });
+      } else {
+        toast.error(err.response?.data?.error || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }

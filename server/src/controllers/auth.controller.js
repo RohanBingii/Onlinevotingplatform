@@ -1,6 +1,20 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const User = require("../models/user.model");
+
+// Configure nodemailer transporter
+// For dev testing, we can just log the OTP or set up a generic transport. 
+// Using a basic fallback setup (it will log if auth is missing)
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.ethereal.email",
+    port: process.env.SMTP_PORT || 587,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
+});
 
 
 exports.register = async (req, res) => {
@@ -9,16 +23,45 @@ exports.register = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ error: "Email and password are required" });
         }
+        const allowedDomain = process.env.ALLOWED_EMAIL_DOMAIN || "@iiita.ac.in";
+        const domainSuffix = allowedDomain.startsWith('@') ? allowedDomain : `@${allowedDomain}`;
+        
+        if (!email.toLowerCase().endsWith(domainSuffix.toLowerCase())) {
+            return res.status(400).json({ error: `Registration restricted. Only ${domainSuffix} emails are allowed.` });
+        }
+
         const userExists = await User.findOne({ where: { email } });
         if (userExists) return res.status(400).json({ error: "User already exists" });
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Generate 6-digit OTP
+        const verificationOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiry = new Date(Date.now() + 10 * 60000); // 10 minutes
+
         const user = await User.create({
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            verificationOTP,
+            otpExpiry
         });
 
-        res.json({ message: "User registered successfully", user });
+        // Send Email (or log to console for dev)
+        try {
+            if (process.env.SMTP_USER) {
+                await transporter.sendMail({
+                    from: '"Secure Voting" <noreply@votingplatform.com>',
+                    to: email,
+                    subject: 'Verify your Academic Email',
+                    text: `Your verification OTP is: ${verificationOTP}. It expires in 10 minutes.`
+                });
+            } else {
+                console.log(`[DEV MODE] OTP for ${email} is: ${verificationOTP}`);
+            }
+        } catch (mailErr) {
+            console.error("Failed to send email:", mailErr);
+        }
+
+        res.json({ message: "User registered successfully. Please verify your email.", userId: user.id });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -35,6 +78,15 @@ exports.login = async (req, res) => {
 
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) return res.status(400).json({ error: "Invalid credentials" });
+
+        // Check if verified
+        if (!user.isVerified) {
+            return res.status(403).json({ 
+                error: "Email not verified", 
+                unverified: true,
+                email: user.email 
+            });
+        }
 
         // If MFA enabled → DO NOT issue JWT yet
         if (user.mfaEnabled) {
@@ -61,6 +113,45 @@ exports.login = async (req, res) => {
             token
         });
 
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({ error: "Email and OTP are required" });
+        }
+
+        const user = await User.findOne({ where: { email } });
+        
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ error: "Email is already verified" });
+        }
+
+        if (user.verificationOTP !== otp) {
+            return res.status(400).json({ error: "Invalid OTP" });
+        }
+
+        if (new Date() > user.otpExpiry) {
+            return res.status(400).json({ error: "OTP has expired. Please register again or request a new OTP." });
+        }
+
+        // Mark as verified
+        user.isVerified = true;
+        user.verificationOTP = null;
+        user.otpExpiry = null;
+        await user.save();
+
+        res.json({ message: "Email verified successfully! You can now log in." });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
