@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Plus, Calendar, Settings, Activity, ShieldCheck } from 'lucide-react';
+import { Plus, Calendar, Settings, Activity, ShieldCheck, Key, Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../api/axios';
 
@@ -15,6 +15,7 @@ const AdminDashboard = () => {
   const [description, setDescription] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [createdShares, setCreatedShares] = useState(null);
 
   // Edit Form State
   const [editingElection, setEditingElection] = useState(null);
@@ -62,10 +63,14 @@ const AdminDashboard = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/election/create', { title, description, startTime, endTime });
+      const res = await api.post('/election/create', { title, description, startTime, endTime });
       toast.success('Election created successfully');
       setShowCreate(false);
       fetchElections();
+      
+      if (res.data.keyShares) {
+        setCreatedShares(res.data.keyShares);
+      }
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create election');
     }
@@ -200,6 +205,70 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {createdShares && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 w-full max-w-2xl border border-primary-500/50 bg-white"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-100 text-red-600 rounded-xl">
+                <Key className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Critical: Save Key Shares</h2>
+            </div>
+            
+            <p className="text-slate-600 mb-6">
+              This election is secured using Shamir's Secret Sharing. The private key has been split into 5 shares. 
+              <strong> You MUST save these shares securely. At least 3 shares will be required to decrypt the election results. </strong> 
+              The system does not store the private key, so if these are lost, the votes cannot be tallied!
+            </p>
+
+            <div className="space-y-3 mb-8 max-h-[300px] overflow-y-auto pr-2">
+              {createdShares.map((share, idx) => (
+                <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between gap-4">
+                  <div className="flex flex-col w-full overflow-hidden">
+                    <span className="text-xs font-bold text-slate-500 mb-1">SHARE {idx + 1}</span>
+                    <code className="text-sm text-slate-800 break-all w-full">{share}</code>
+                  </div>
+                  <button 
+                    onClick={() => { navigator.clipboard.writeText(share); toast.success(`Share ${idx + 1} copied!`); }}
+                    className="p-2 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
+                    title="Copy Share"
+                  >
+                    <Copy className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  const formattedShares = createdShares.map((s, i) => `Share ${i + 1}:\r\n${s}\r\n`).join('\r\n');
+                  const blob = new Blob([formattedShares], { type: 'text/plain' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `election-keys-${new Date().getTime()}.txt`;
+                  a.click();
+                }}
+                className="glass-button flex-1 flex justify-center items-center gap-2"
+              >
+                <Download className="w-5 h-5" /> Download All Shares
+              </button>
+              <button 
+                onClick={() => setCreatedShares(null)} 
+                className="glass-button-secondary flex-1"
+              >
+                I Have Saved Them Securely
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>

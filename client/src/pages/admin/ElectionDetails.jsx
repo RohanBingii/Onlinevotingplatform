@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 // Recharts removed for simpler UI
 import api from '../../api/axios';
-import { Lock, Plus, Users, Award, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Lock, Plus, Users, Award, AlertTriangle, ShieldCheck, Key } from 'lucide-react';
 
 const ElectionDetails = () => {
   const { id } = useParams();
@@ -17,6 +17,11 @@ const ElectionDetails = () => {
   // Integrity state
   const [integrityStatus, setIntegrityStatus] = useState(null);
   const [verifying, setVerifying] = useState(false);
+
+  // Decryption state
+  const [showDecryptModal, setShowDecryptModal] = useState(false);
+  const [sharesInput, setSharesInput] = useState(['', '', '']);
+  const [decrypting, setDecrypting] = useState(false);
 
   // New Candidate state
   const [showAddCandidate, setShowAddCandidate] = useState(false);
@@ -31,8 +36,7 @@ const ElectionDetails = () => {
       setCandidates(canRes.data.candidates);
 
       if (elRes.data.election.status === 'closed') {
-        const resRes = await api.get(`/election/results/${id}`);
-        setResults(resRes.data.results);
+        // Results are no longer fetched automatically
       }
     } catch (err) {
       toast.error('Failed to load election details');
@@ -90,6 +94,26 @@ const ElectionDetails = () => {
     }
   };
 
+  const handleDecrypt = async (e) => {
+    e.preventDefault();
+    const filledShares = sharesInput.filter(s => s.trim() !== '');
+    if (filledShares.length < 3) {
+      toast.error('At least 3 shares are required.');
+      return;
+    }
+    setDecrypting(true);
+    try {
+      const res = await api.post(`/election/results/${id}`, { shares: filledShares });
+      setResults(res.data.results);
+      setShowDecryptModal(false);
+      toast.success('Results decrypted successfully!');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to decrypt results');
+    } finally {
+      setDecrypting(false);
+    }
+  };
+
   if (loading) return <div className="text-center pt-20 animate-pulse text-slate-900">Loading securely...</div>;
   if (!election) return <div className="text-center pt-20 text-red-400">Election not found</div>;
 
@@ -134,7 +158,13 @@ const ElectionDetails = () => {
 
           {election.status === 'active' && (
             <button onClick={handleCloseElection} className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/50 px-6 py-3 rounded-xl transition-all font-medium flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" /> End Election & Decrypt Tally
+              <AlertTriangle className="w-5 h-5" /> End Election
+            </button>
+          )}
+
+          {election.status === 'closed' && !results && (
+            <button onClick={() => setShowDecryptModal(true)} className="bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30 px-6 py-3 rounded-xl transition-all font-medium flex items-center gap-2 mt-4">
+              <Key className="w-5 h-5" /> Input Key Shares to Decrypt Tally
             </button>
           )}
         </div>
@@ -208,6 +238,66 @@ const ElectionDetails = () => {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {showDecryptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+          <motion.form 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 w-full max-w-lg border border-primary-500/50 bg-white"
+            onSubmit={handleDecrypt}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-primary-100 text-primary-600 rounded-xl">
+                <Key className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Decrypt Results</h2>
+            </div>
+            
+            <p className="text-slate-600 mb-6">
+              Please provide at least 3 cryptographic key shares to reconstruct the private key and decrypt the election tally.
+            </p>
+
+            <div className="space-y-4 mb-8">
+              {[0, 1, 2].map((idx) => (
+                <div key={idx}>
+                  <label className="block text-sm font-bold text-slate-500 mb-1">Share {idx + 1}</label>
+                  <input 
+                    type="text" 
+                    required 
+                    className="glass-input w-full font-mono text-xs p-3" 
+                    placeholder={`Paste Share ${idx + 1}...`}
+                    value={sharesInput[idx]}
+                    onChange={(e) => {
+                      const newShares = [...sharesInput];
+                      newShares[idx] = e.target.value;
+                      setSharesInput(newShares);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                type="submit"
+                disabled={decrypting}
+                className="glass-button flex-1 flex justify-center items-center gap-2 bg-primary-600 text-white disabled:opacity-50"
+              >
+                {decrypting ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : <Key className="w-5 h-5" />} 
+                {decrypting ? 'Decrypting...' : 'Decrypt Tally'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowDecryptModal(false)} 
+                className="glass-button-secondary flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.form>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ const Election = require("./election.model");
 const Vote = require("./vote.model");
 const Candidate = require("./candidate.model");
 const VotingReceipt = require("./votingReceipt.model");
+const AuditLog = require("./audit.model");
 
 // Election → Vote (1:N)
 Election.hasMany(Vote, { foreignKey: "electionId", onDelete: "CASCADE" });
@@ -20,4 +21,4 @@ VotingReceipt.belongsTo(User, { foreignKey: "userId" });
 Election.hasMany(VotingReceipt, { foreignKey: "electionId", onDelete: "CASCADE" });
 VotingReceipt.belongsTo(Election, { foreignKey: "electionId" });
 
-module.exports = { User, Election, Vote, Candidate, VotingReceipt };
+module.exports = { User, Election, Vote, Candidate, VotingReceipt, AuditLog };

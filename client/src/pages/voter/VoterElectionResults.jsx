@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import api from '../../api/axios';
-import { Award, ShieldCheck, Lock } from 'lucide-react';
+import { Award, ShieldCheck, Lock, Clock } from 'lucide-react';
 
 const VoterElectionResults = () => {
   const { id } = useParams();
@@ -15,6 +15,7 @@ const VoterElectionResults = () => {
   // Integrity state
   const [integrityStatus, setIntegrityStatus] = useState(null);
   const [verifying, setVerifying] = useState(false);
+  const [resultsPending, setResultsPending] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,9 +24,15 @@ const VoterElectionResults = () => {
         setElection(elRes.data.election);
         
         if (elRes.data.election.status === 'closed') {
-          const resRes = await api.get(`/election/results/${id}`);
-          setResults(resRes.data.results);
-          
+          // Try to fetch published results from the GET endpoint
+          try {
+            const resRes = await api.get(`/election/results/${id}`);
+            setResults(resRes.data.results);
+          } catch (resErr) {
+            // 404 means results not published yet by admin
+            setResultsPending(true);
+          }
+
           // Auto-verify integrity
           setVerifying(true);
           try {
@@ -54,7 +61,27 @@ const VoterElectionResults = () => {
   }, [id, navigate]);
 
   if (loading) return <div className="text-center pt-20 animate-pulse text-slate-900">Loading securely...</div>;
-  if (!election || !results) return <div className="text-center pt-20 text-red-400">Results not available</div>;
+  if (!election) return <div className="text-center pt-20 text-red-400">Election not found</div>;
+  
+  // Results are pending admin decryption
+  if (resultsPending && !results) return (
+    <div className="py-8 max-w-4xl mx-auto">
+      <button onClick={() => navigate('/dashboard')} className="text-slate-500 hover:text-slate-900 mb-6 flex items-center gap-2 transition-colors">
+        &larr; Back to Dashboard
+      </button>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-12 text-center">
+        <div className="flex justify-center mb-6">
+          <div className="p-5 bg-amber-50 rounded-full border border-amber-200">
+            <Clock className="w-10 h-10 text-amber-500" />
+          </div>
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-3">Results Pending Publication</h2>
+        <p className="text-slate-500 max-w-md mx-auto">
+          This election has closed. The results are cryptographically sealed and require election trustees to provide their key shares to unlock the tally. Please check back later once the results have been published by the administrator.
+        </p>
+      </motion.div>
+    </div>
+  );
 
   return (
     <div className="py-8 max-w-4xl mx-auto">

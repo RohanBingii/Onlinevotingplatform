@@ -2,7 +2,7 @@ const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const sequelize = require("./config/database");
 const bcrypt = require("bcrypt");
-const { generateKeyPair } = require("./security/encryption.service");
+const { generateKeyPair, splitPrivateKey } = require("./security/encryption.service");
 
 // Require associations so all models (including VotingReceipt) sync properly
 const { User, Election, Candidate } = require("./models/associations");
@@ -16,26 +16,20 @@ async function seed() {
 
         // 1. Create Users
         const adminPass = await bcrypt.hash("admin123", 10);
-        const voterPass = await bcrypt.hash("voter123", 10);
 
         const admin = await User.create({
-            email: "admin@securevote.com",
+            email: "admin@iiita.ac.in",
             password: adminPass,
             role: "admin",
-            mfaEnabled: false
+            mfaEnabled: false,
+            isVerified: true
         });
 
-        const voter = await User.create({
-            email: "voter@securevote.com",
-            password: voterPass,
-            role: "voter",
-            mfaEnabled: false
-        });
-
-        console.log("✅ Users created: admin@securevote.com & voter@securevote.com");
+        console.log("✅ User created: admin@iiita.ac.in (Verified)");
 
         // 2. Create Elections
         const keyPair1 = generateKeyPair();
+        const shares = splitPrivateKey(keyPair1.privateKey, 5, 3);
 
         const activeElection = await Election.create({
             title: "Global Tech Board Election 2026",
@@ -43,11 +37,12 @@ async function seed() {
             startTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Started yesterday
             endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Ends in 7 days
             status: "active",
-            publicKey: keyPair1.publicKey,
-            privateKey: keyPair1.privateKey
+            publicKey: keyPair1.publicKey
         });
 
         console.log(`✅ Active Election created: ${activeElection.title} (ID: ${activeElection.id})`);
+        console.log("🔐 IMPORTANT: Key Shares for this election (save these!):");
+        shares.forEach((share, idx) => console.log(`   Share ${idx + 1}: ${share}`));
 
         // 3. Create Candidates
         await Candidate.bulkCreate([

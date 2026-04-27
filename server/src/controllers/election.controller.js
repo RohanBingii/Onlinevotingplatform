@@ -1,6 +1,6 @@
 
 const Election = require("../models/election.model");
-const { generateKeyPair, decryptVote } = require("../security/encryption.service");
+const { generateKeyPair, decryptVote, splitPrivateKey, reconstructPrivateKey } = require("../security/encryption.service");
 const { addAuditEntry } = require("../security/hashChain.service");
 const Vote = require("../models/vote.model");
 
@@ -10,17 +10,17 @@ exports.createElection = async (req, res) => {
         const { title, description, startTime, endTime } = req.body;
 
         const { publicKey, privateKey } = generateKeyPair();
+        const keyShares = splitPrivateKey(privateKey, 5, 3);
 
         const election = await Election.create({
             title,
             description,
             startTime,
             endTime,
-            publicKey,
-            privateKey
+            publicKey
         });
 
-        res.json({ message: "Election created", election });
+        res.json({ message: "Election created", election, keyShares });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -54,6 +54,11 @@ const { Candidate } = require("../models/associations"); // Make sure Candidate 
 exports.getResults = async (req, res) => {
     try {
         const { electionId } = req.params;
+        const { shares } = req.body;
+
+        if (!shares || !Array.isArray(shares) || shares.length < 3) {
+            return res.status(400).json({ error: "Please provide at least 3 valid key shares to decrypt results." });
+        }
 
         const election = await Election.findByPk(electionId);
         if (!election) {
@@ -68,14 +73,26 @@ exports.getResults = async (req, res) => {
             where: { electionId }
         });
 
+        let privateKey;
+        try {
+            privateKey = reconstructPrivateKey(shares);
+        } catch (err) {
+            return res.status(400).json({ error: "Failed to reconstruct private key. Invalid shares." });
+        }
+
         // 1. Tally the decrypted Candidate IDs
         const rawResults = {};
         for (let vote of votes) {
-            const decrypted = decryptVote(
-                vote.encryptedVote,
-                election.privateKey
-            );
-            rawResults[decrypted] = (rawResults[decrypted] || 0) + 1;
+            try {
+                const decrypted = decryptVote(
+                    vote.encryptedVote,
+                    privateKey
+                );
+                rawResults[decrypted] = (rawResults[decrypted] || 0) + 1;
+            } catch (decErr) {
+                console.error("Decryption error for a vote:", decErr.message);
+                return res.status(400).json({ error: "Failed to decrypt votes. The key shares provided reconstructed a valid key, but it is the WRONG key for this election." });
+            }
         }
 
         // 2. Fetch Candidates and map the results to their names
@@ -93,10 +110,14 @@ exports.getResults = async (req, res) => {
         });
 
         await addAuditEntry(
-            "RESULTS_VIEWED",
+            "RESULTS_PUBLISHED",
             req.user.id,
             { electionId }
         );
+
+        // Save the decrypted results to the DB so voters can view them
+        election.publishedResults = formattedResults;
+        await election.save();
 
         res.json({ results: formattedResults });
 
@@ -149,6 +170,20 @@ exports.getElectionById = async (req, res) => {
             return res.status(404).json({ error: "Election not found" });
         }
         res.json({ election });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getPublishedResults = async (req, res) => {
+    try {
+        const { electionId } = req.params;
+        const election = await Election.findByPk(electionId, {
+            attributes: ['id', 'title', 'status', 'publishedResults']
+        });
+        if (!election) return res.status(404).json({ error: "Election not found" });
+        if (!election.publishedResults) return res.status(404).json({ error: "Results have not been published yet" });
+        res.json({ results: election.publishedResults });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

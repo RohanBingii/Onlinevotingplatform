@@ -30,6 +30,10 @@ const Election = sequelize.define("Election", {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    publishedResults: {
+        type: DataTypes.JSON,
+        allowNull: true
+    },
     status: {
         type: DataTypes.ENUM("upcoming", "active", "closed"),
         defaultValue: "upcoming"
